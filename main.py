@@ -1,22 +1,20 @@
 import os
 import cv2
+import time
 import numpy as np
 from computer_vision.frame_extractor import extract_frames
 from computer_vision.detection_engine import detect_people
-from computer_vision.object_tracker import SimpleTracker
-from event_engine.event_detector import detect_events
-from agents.vision_agent import vision_agent
-from agents.context_agent import context_agent
-from agents.decision_agent import decision_agent
-from agents.alert_agent import alert_agent
+from computer_vision.object_tracker import AdvancedTracker
+from event_engine.event_detector import EventDetector
+from agents.langgraph_setup import build_surveillance_graph
 
-# 1. Setup Dummy Environment (For testing if no real video or model exists)
+# Setup Dummy Video
 video_path = "data/videos/test_video.mp4"
 os.makedirs("data/videos", exist_ok=True)
 os.makedirs("models", exist_ok=True)
+os.makedirs("data/processed/reports", exist_ok=True)
 
 if not os.path.exists(video_path):
-    print("Creating a dummy test video for extraction...")
     out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'mp4v'), 1.0, (640, 480))
     for i in range(5): 
         frame = np.zeros((480, 640, 3), dtype=np.uint8)
@@ -24,14 +22,9 @@ if not os.path.exists(video_path):
         out.write(frame)
     out.release()
 
-# Dummy model class for testing without the real 16MB pytorch model
 class DummyModel:
-    def __init__(self):
-        pass
-    def eval(self):
-        pass
+    def eval(self): pass
     def __call__(self, frame):
-        # Fake 6 detections to trigger the crowd event (>5)
         return [
             {"bbox": [10, 10, 50, 50], "score": 0.95},
             {"bbox": [60, 60, 100, 100], "score": 0.92},
@@ -41,48 +34,53 @@ class DummyModel:
             {"bbox": [260, 260, 300, 300], "score": 0.89}
         ]
 
-# 2. Extract Frames
-print("--- Extracting Frames ---")
-extract_frames(video_path, "data/frames")
+def run_pipeline():
+    print("--- Extracting Frames ---")
+    extract_frames(video_path, "data/frames")
 
-# 3. Initialize Components
-print("\n--- Initializing AI Surveillance System ---")
-model = DummyModel() # Replace with actual load_model("models/people_detection.pt")
-model.eval()
+    print("\n--- Initializing AI Surveillance Architecture ---")
+    model = DummyModel()
+    model.eval()
 
-tracker = SimpleTracker()
-
-# 4. Process Workflow
-print("\n--- Running AI Pipeline ---")
-# Simulating processing frame 0
-frame_path = "data/frames/frame_0.jpg"
-frame = cv2.imread(frame_path)
-
-if frame is not None:
-    # PyTorch Detection
-    detections = detect_people(model, frame)
-    print(f"Detected {len(detections)} people.")
+    tracker = AdvancedTracker()
+    event_detector = EventDetector(
+        loiter_threshold=120,
+        restricted_zones=[[(0, 0), (200, 0), (200, 200), (0, 200)]], # Example top-left corner
+        crowd_threshold=5
+    )
     
-    # Object Tracking
-    tracks = tracker.update(detections, frame_id=0)
+    # Initialize LangGraph Agentic Pipeline
+    agent_graph = build_surveillance_graph()
+
+    print("\n--- Running AI Pipeline ---")
+    frame = cv2.imread("data/frames/frame_0.jpg")
     
-    # Event Detection
-    events = detect_events(detections)
-    
-    # Multi-Agent AI Processing
-    for event_data in events:
-        event_name = event_data["event"]
-        print(f"\nProcessing Event: {event_name}")
+    if frame is not None:
+        # Detection
+        detections = detect_people(model, frame)
+        bounding_boxes = [d['bbox'] for d in detections]
         
-        # Agents processing
-        v_context = vision_agent(event_name)
-        policy_context = context_agent(event_name)
-        risk_level = decision_agent(event_name)
+        # Advanced Tracking
+        tracked_objects = tracker.update(bounding_boxes)
         
-        print(f"Vision Context: {v_context}")
-        print(f"Policy Context: {policy_context}")
+        # Behavior/Event Detection
+        events = event_detector.detect_events(tracked_objects, time.time())
         
-        # Trigger Alert
-        alert_agent(event_name, risk_level)
-else:
-    print("Error loading frame.")
+        # Trigger Multi-Agent AI Workflows
+        for evt in events:
+            print(f"\n---> Firing Event Workflow: {evt['event']}")
+            initial_state = {
+                "event_name": evt["event"],
+                "event_data": evt,
+                "vision_context": "",
+                "policy_context": "",
+                "risk_level": "UNKNOWN",
+                "report": "",
+                "alert_triggered": False
+            }
+            # Execute workflow through nodes
+            result_state = agent_graph.invoke(initial_state)
+            print("--- Executed Graph Run ---")
+
+if __name__ == "__main__":
+    run_pipeline()
