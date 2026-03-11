@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  surveillance-api:
+    build: .
+    container_name: agentic-ai-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./incidents.db:/app/incidents.db
+    command: uvicorn backend.api:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  dashboard:
+    build: .
+    container_name: agentic-ai-dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./incidents.db:/app/incidents.db
+    command: streamlit run dashboard/dashboard_server.py --server.port 8501 --server.address 0.0.0.0
+    depends_on:
+      - surveillance-api

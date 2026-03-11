@@ -38,10 +38,12 @@ def decision_node(state: AgentState):
 
 from automation.report_generator import ReportGenerator
 from backend.database import IncidentDatabase
+from automation.notification_service import NotificationService
 import time
 
 report_gen = ReportGenerator()
 db = IncidentDatabase()
+notifier = NotificationService()
 
 def report_node(state: AgentState):
     # Draft recommendations and dump to markdown
@@ -56,14 +58,22 @@ def alert_node(state: AgentState):
         print(f"!!! DISPATCHING ALERT !!! -> {state['event_name']} ({state['risk_level']} RISK)")
         
         # Log to Database
-        db.insert_incident({
+        incident_data = {
             "timestamp": time.time(),
             "event_type": state["event_name"],
             "location": state["event_data"].get("location", "Main Entrance"),
             "risk_level": state["risk_level"],
             "description": state["vision_context"]
-        })
+        }
+        db.insert_incident(incident_data)
         print("[*] Alert logged to Incident Database.")
+        
+        # Dispatch Automation
+        if state["risk_level"] in ["HIGH", "CRITICAL"]:
+            notifier.send_email_alert(incident_data)
+            notifier.create_support_ticket(incident_data)
+            print("[*] Automation hooks dispatched.")
+            
     else:
         state["alert_triggered"] = False
     return state
