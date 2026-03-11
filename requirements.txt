@@ -1,0 +1,11 @@
+torch
+opencv-python
+numpy
+pandas
+fastapi
+uvicorn
+langchain
+langgraph
+faiss-cpu
+sentence-transformers
+scikit-learn
