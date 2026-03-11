@@ -74,7 +74,10 @@ def run_pipeline():
                 "event_data": evt,
                 "vision_context": "",
                 "policy_context": "",
+                "historical_context": "",
                 "risk_level": "UNKNOWN",
+                "reviewer_notes": "",
+                "is_approved": False,
                 "report": "",
                 "alert_triggered": False
             }

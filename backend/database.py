@@ -53,3 +53,17 @@ class IncidentDatabase:
             
         conn.close()
         return incidents
+
+    def get_recent_incidents(self, limit=5):
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM incidents ORDER BY timestamp DESC LIMIT ?', (limit,))
+        rows = cursor.fetchall()
+        
+        incidents = []
+        for row in rows:
+            incidents.append(dict(row))
+            
+        conn.close()
+        return incidents
