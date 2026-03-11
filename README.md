@@ -13,7 +13,9 @@ An enterprise-grade, intelligent video analytics system designed to showcase adv
 - **Multi-Agent AI Architecture (LangGraph):**
   - **Vision Agent**: Parses spatial tracking logic.
   - **Context Agent**: Extracts RAG security policies.
-  - **Decision Agent**: Calculates threat thresholds.
+  - **Investigation Agent**: Queries historical database patterns to identify recurring threats.
+  - **Decision Agent**: Calculates threat thresholds based on synthesized intelligence.
+  - **Reviewer Agent**: Acts as an AI safeguard filter, downgrading false positives and conditionally routing execution to optimize performance.
   - **Report & Alert Agents**: Automates IT ticket generation and email notifications.
 - **Explainable RAG System:**
   - Connects system alerts to dynamic vector databases (FAISS) storing enterprise security policies.

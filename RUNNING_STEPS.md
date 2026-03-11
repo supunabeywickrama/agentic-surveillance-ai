@@ -50,8 +50,8 @@ python main.py
 1. Extracts frames to `data/frames/`.
 2. Computes inference using `yolov8n.pt` and mathematical centroid object tracking.
 3. `EventDetector` monitors behavioral zones (Loitering/Restricted Zones).
-4. **LangGraph Workflow**: Vision Agent -> Context Agent (using RAG) -> Decision Agent -> Report & Alert Agents.
-5. High-risk incidents trigger mock automated support tickets and log into the local SQLite `incidents.db`. Detailed incident explanations are written to `data/processed/reports/`.
+4. **LangGraph Workflow**: Vision Agent -> Context Agent (using RAG) -> Investigation Agent -> Decision Agent -> Reviewer Agent -> (Conditionally) Report & Alert Agents.
+5. High-risk, reviewer-approved incidents trigger automated support tickets and log into the local SQLite `incidents.db`. Detailed incident explanations are written to `data/processed/reports/`.
 
 ---
 
